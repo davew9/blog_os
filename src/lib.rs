@@ -8,6 +8,7 @@
 #![feature(wake_trait)]
 #![test_runner(crate::test_runner)]
 #![reexport_test_harness_main = "test_main"]
+#![feature(renamed_spin_loop)]
 
 extern crate alloc;
 extern crate rlibc;
@@ -21,10 +22,12 @@ pub mod memory;
 pub mod serial;
 pub mod task;
 pub mod vga_buffer;
+pub mod filesystem;
 
 pub fn init() {
     gdt::init();
     interrupts::init_idt();
+    filesystem::init();
     unsafe { interrupts::PICS.lock().initialize() };
     x86_64::instructions::interrupts::enable();
 }

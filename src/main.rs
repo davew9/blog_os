@@ -55,8 +55,15 @@ async fn async_number() -> u32 {
 }
 
 async fn example_task() {
+    use blog_os::filesystem;
     let number = async_number().await;
     println!("async number: {}", number);
+    println!("async number: {}", number);
+    filesystem::create("test");
+    let res = filesystem::open("test");
+    println!("file descriptor: {}", res);
+    let res2 = filesystem::open("test2");
+    println!("file2 descriptor: {}", res2);
 }
 
 #[test_case]
