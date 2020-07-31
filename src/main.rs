@@ -66,6 +66,13 @@ async fn example_task() {
     println!("file2 descriptor: {}", res2);
 }
 
+async fn example_file_task() {
+    use blog_os::filesystem::File;
+
+
+
+}
+
 #[test_case]
 fn trivial_assertion() {
     assert_eq!(1, 1);
