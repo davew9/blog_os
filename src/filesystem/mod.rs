@@ -7,6 +7,7 @@ use core::sync::atomic::{AtomicUsize};
 use self::lock::RWLock;
 
 pub mod lock;
+pub mod file;
 
 
 lazy_static! {

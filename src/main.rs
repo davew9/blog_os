@@ -10,6 +10,7 @@ use blog_os::println;
 use blog_os::task::{executor::Executor, keyboard, Task};
 use bootloader::{entry_point, BootInfo};
 use core::panic::PanicInfo;
+use blog_os::filesystem::file::File;
 
 entry_point!(kernel_main);
 
@@ -32,6 +33,7 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
 
     let mut executor = Executor::new();
     executor.spawn(Task::new(example_task()));
+    executor.spawn(Task::new(example_file_task()));
     executor.spawn(Task::new(keyboard::print_keypresses()));
     executor.run();
 }
@@ -67,10 +69,12 @@ async fn example_task() {
 }
 
 async fn example_file_task() {
-    use blog_os::filesystem::File;
+    use blog_os::filesystem::file;
 
+    let test = File(5);
+    test.write('a');
 
-
+    println!(test.read(1));
 }
 
 #[test_case]
