@@ -20,9 +20,10 @@ pub mod gdt;
 pub mod interrupts;
 pub mod memory;
 pub mod serial;
-pub mod task;
+#[macro_use]
 pub mod vga_buffer;
 pub mod filesystem;
+pub mod task;
 
 pub fn init() {
     gdt::init();
