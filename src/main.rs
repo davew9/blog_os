@@ -10,6 +10,8 @@ use blog_os::println;
 use blog_os::task::{executor::Executor, keyboard, Task};
 use bootloader::{entry_point, BootInfo};
 use core::panic::PanicInfo;
+use blog_os::vga_buffer::print_bytes;
+use blog_os::filesystem;
 
 entry_point!(kernel_main);
 
@@ -32,6 +34,7 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
 
     let mut executor = Executor::new();
     executor.spawn(Task::new(example_task()));
+    executor.spawn(Task::new(example_task2()));
     executor.spawn(Task::new(keyboard::print_keypresses()));
     executor.run();
 }
@@ -55,15 +58,28 @@ async fn async_number() -> u32 {
 }
 
 async fn example_task() {
-    use blog_os::filesystem;
-    let number = async_number().await;
-    println!("async number: {}", number);
-    println!("async number: {}", number);
-    filesystem::create("test");
-    let res = filesystem::open("test");
-    println!("file descriptor: {}", res);
-    let res2 = filesystem::open("test2");
-    println!("file2 descriptor: {}", res2);
+    println!("creating the file test1 and test 2 in task1");
+    filesystem::create("test1");
+    filesystem::create("test2");
+    let file1 = filesystem::open("test1");
+    let file2 = filesystem::open("test2");
+    println!("writing content in test1 and test2");
+    filesystem::write(file1, 0, "Content of File 1: Should be also visible in task2");
+    filesystem::write(file2, 0, "Content of File 2: Should be also visible in task2");
+    filesystem::close(file1);
+    //file2 stays open
+}
+
+async fn example_task2() {
+    let file3 = filesystem::open("test1");
+    let file4 = filesystem::open("test2");
+    let content1 = filesystem::read(file3,0);
+    let content2 = filesystem::read(file4,0);
+    println!("content of file 1 accessed in task2:");
+    print_bytes(&content1.unwrap());
+    println!("content of file 2 accessed in task2:");
+    print_bytes(&content2.unwrap());
+
 }
 
 #[test_case]

@@ -2,6 +2,7 @@ use super::{Task, TaskId};
 use alloc::{collections::BTreeMap, sync::Arc, task::Wake};
 use core::task::{Context, Poll, Waker};
 use crossbeam_queue::ArrayQueue;
+use crate::filesystem;
 
 pub struct Executor {
     tasks: BTreeMap<TaskId, Task>,
@@ -46,6 +47,7 @@ impl Executor {
                 Some(task) => task,
                 None => continue, // task no longer exists
             };
+            unsafe { filesystem::set_active_task(task.id.0); }
             let waker = waker_cache
                 .entry(task_id)
                 .or_insert_with(|| TaskWaker::new(task_id, task_queue.clone()));

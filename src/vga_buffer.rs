@@ -119,6 +119,14 @@ impl Writer {
         }
     }
 
+    fn write_bytes(&mut self, bytes: &[u8]) {
+        for byte in bytes {
+            if let 0x20..=0x7e | b'\n' = byte {
+                self.write_byte(*byte)
+            }
+        }
+    }
+
     /// Shifts all lines one line up and clears the last row.
     fn new_line(&mut self) {
         for row in 1..BUFFER_HEIGHT {
@@ -172,6 +180,15 @@ pub fn _print(args: fmt::Arguments) {
 
     interrupts::without_interrupts(|| {
         WRITER.lock().write_fmt(args).unwrap();
+    });
+}
+
+pub fn print_bytes(bytes: &[u8]) {
+    use x86_64::instructions::interrupts;
+
+    interrupts::without_interrupts(|| {
+        WRITER.lock().write_bytes(bytes);
+        println!("\n");
     });
 }
 
