@@ -71,51 +71,331 @@ fn str_to_file(s: &str) -> [u8;1024]{
 }
 
 
-// Creates new file
-pub fn create(file_name: &str) {
-    let file_name_u8 = str_to_u8(file_name);
-    //TODO: SpeicherNode ohne feste Größe?
+// Creates new file and all non existing directories in path
+pub fn create(path: &str) {
+    let mut node;
+    let mut root = true;
+    // FileNameTable of current directory
+    let mut dir_table = &mut NameTable::new();
+    // Root FileNameTable
+    let mut fn_table = FILENAMETABLE.wlock();
+    // Split paths in Directory/File strings
+    let mut chunks = path.split("/").peekable();
 
-    // Möglichkeit um Heap Speicher zu allokieren ohne sich Gedanken um Memory Größe/Layout machen zu müssen:
-    // Node is initialized in Box<>: Allocated in Heap without manual definition of memory size/
-    // alignment. Then Node is casted into raw-pointer. Memory is not freed until
-    // Node is casted back in Box<> and dropped
-    let node: Box<FileNode> = Box::new(FileNode([0;1024]));
-    let node: *mut FileNode = Box::into_raw(node);
+    // Iterate over all Directory/Files of the given Path
+    while let Some(chunk) = chunks.next() {
+        let chunk_u8 = str_to_u8(chunk);
+        // CASE: There is a following Directory/File: Current chunk has to represent a directory
+        if chunks.peek().is_some() {
+            // CASE: It is a first level directory
+            // -> Lookup in Global Root FileNameTable
+            if root {
+                node = fn_table.get_mut(&chunk_u8);
+            }
+            // CASE: It is not a first level directory
+            // ->  Lookup in NameTable of previous node
+            else {
+                node = dir_table.get_mut(&chunk_u8);
+            }
 
-    // Node and Filename are saved in FILENAMETABLE
-    FILENAMETABLE.wlock().insert(file_name_u8, node);
+            // CASE: There was no directory/file with this name
+            // -> Create the directory at the corresponding level
+            if !node.is_some() {
+                let new_node: Box<Node> = Box::new(Node::Directory(DirectoryNode(NameTable::new())));
+                let new_node: *mut Node = Box::into_raw(new_node);
+                if root {
+                    fn_table.insert(chunk_u8, new_node);
+                }
+                else {
+                    dir_table.insert(chunk_u8, new_node);
+                }
+                node = Some(new_node);
+                println!("Directory '{}' was created", chunk);
+            }
+            root = false;
+
+            // CASE: There was a node with this file, but its not a directory node
+            unsafe {
+                match  *(node.unwrap()) {
+                    Node::Directory(ref mut d) => {dir_table = &mut d.0},
+                    _ => panic!("'{}' is no directory", chunk)
+                }
+            }
+
+            //CASE: There is no following Directory/File: Current chunk represents the file to be created
+        } else {
+            // Create an Empty File
+            let node: Box<Node> = Box::new(Node::File(FileNode([0;1024])));
+            let node: *mut Node = Box::into_raw(node);
+            //CASE: The file is located at first level
+            //Create the file and store the pointer in the Root FileNameTable
+            if root {
+                fn_table.insert(chunk_u8, node);
+            }
+            //CASE: The file is not located at firs level
+            //Create the file and store the pointer in the FileTable of the previous directory
+            else {
+                dir_table.insert(chunk_u8, node);
+            }
+            println!("File '{}' was created", chunk)
+
+        }
+    }
 }
 
-// Opens File, returns File Descriptor
-pub fn open(file_name: &str) -> usize {
+// Creates new directory and all non existing directorys in path
+// TODO Viel Code identisch zu create, kann man vielleicht in funktion kapseln
+pub fn create_dir(path: &str) {
+    let mut node;
+    let mut root = true;
+    // FileNameTable of current directory
+    let mut dir_table = &mut NameTable::new();
+    // Root FileNameTable
+    let mut fn_table = FILENAMETABLE.wlock();
+    // Split paths in Directory/File strings
+    let mut chunks = path.split("/").peekable();
+
+    // Iterate over all Directory/Files of the given Path
+    while let Some(chunk) = chunks.next() {
+        let chunk_u8 = str_to_u8(chunk);
+        // CASE: There is a following Directory/File: Current chunk has to represent a directory
+        if chunks.peek().is_some() {
+            // CASE: It is a first level directory
+            // -> Lookup in Global Root FileNameTable
+            if root {
+                node = fn_table.get_mut(&chunk_u8);
+            }
+            // CASE: It is not a first level directory
+            // ->  Lookup in NameTable of previous node
+            else {
+                node = dir_table.get_mut(&chunk_u8);
+            }
+
+            // CASE: There was no directory/file with this name
+            // -> Create the directory at the corresponding level
+            if !node.is_some() {
+                let new_node: Box<Node> = Box::new(Node::Directory(DirectoryNode(NameTable::new())));
+                let new_node: *mut Node = Box::into_raw(new_node);
+                if root {
+                    fn_table.insert(chunk_u8, new_node);
+                }
+                else {
+                    dir_table.insert(chunk_u8, new_node);
+                }
+                node = Some(new_node);
+                println!("Directory '{}' was created", chunk);
+            }
+            root = false;
+
+            // CASE: There was a node with this file, but its not a directory node
+            unsafe {
+                match  *(node.unwrap()) {
+                    Node::Directory(ref mut d) => {dir_table = &mut d.0},
+                    _ => panic!("'{}' is no directory", chunk)
+                }
+            }
+
+            //CASE: There is no following Directory/File: Current chunk represents the file to be created
+        } else {
+            // Create an Empty Directory
+            let node: Box<Node> = Box::new(Node::Directory(DirectoryNode(NameTable::new())));
+            let node: *mut Node = Box::into_raw(node);
+            //CASE: The directory is located at first level
+            //Create the directory and store the pointer in the Root FileNameTable
+            if root {
+                fn_table.insert(chunk_u8, node);
+            }
+            //CASE: The directory is not located at firs level
+            //Create the directory and store the pointer in the FileTable of the previous directory
+            else {
+                dir_table.insert(chunk_u8, node);
+            }
+            println!("Directory '{}' has been created", chunk)
+
+        }
+    }
+}
+
+// Deletes the Directory/File specified by the last part of the path string
+pub fn delete(path: &str) {
+    let path_u8 = str_to_u8(path);
+    let mut node;
+    let mut root = true;
+    // FileNameTable of current directory
+    let mut dir_table = &mut NameTable::new();
+    // Root FileNameTable
+    let mut fn_table = FILENAMETABLE.wlock();
+
+    let mut chunks = path.split("/").peekable();
+    while let Some(chunk) = chunks.next() {
+        let chunk_u8 = str_to_u8(chunk);
+        // CASE: Last Element of Path hasn't been reached yet
+        // -> Validate Path, Reset the FileNameTable of current directory if valid
+        //    directory is encountered
+        if chunks.peek().is_some() {
+            if root {
+                node = fn_table.get_mut(&chunk_u8);
+            } else {
+                node = dir_table.get_mut(&chunk_u8);
+            }
+            if !node.is_some() {
+                println!("Directory: '{}' doesn't exist", chunk)
+            }
+
+            unsafe {
+                match *(node.unwrap()) {
+                    Node::Directory(ref mut d) => { dir_table = &mut d.0 },
+                    _ => println!("'{}' is no directory", chunk)
+                }
+            }
+            root = false;
+        }
+
+
+        // CASE:  Last Element of Path (=the Element to delete) has been reached
+        else {
+            // CASE: Element is located at first level
+            // -> lookup in Root FileNameTable
+            if root {
+                node = fn_table.get_mut(&chunk_u8);
+            }
+            // CASE: Element is not located at first level
+            // -> lookup in FileNameTable of previous DirectoryNOde
+            else {
+                node = dir_table.get_mut(&chunk_u8);
+            }
+            // CASE: Directory or File doesn't exist
+            if !node.is_some() {
+                println!(" '{}' doesn't exist", chunk);
+                return;
+            }
+
+            unsafe {
+                match  &*(node.unwrap()) {
+                    // CASE: Object to delete is directory
+                    Node::Directory(ref d) => {
+                        let index = (d.0).0.iter().position(|r| r.path != [0; 32]);
+                        // CASE: Directory is empty
+                        // -> Delete Directory
+                        if !index.is_some() {
+                            drop(Box::from_raw(node.unwrap()));
+                            if root { fn_table.delete(&chunk_u8); } else { dir_table.delete(&chunk_u8) }
+                            println!("Directory '{}' was deleted", chunk);
+                            // CASE: Directory is not empty
+                        } else { println!("Directory '{}' contains Files and cannot be deleted", chunk) }
+                    },
+                    // CASE: Object to delete is file
+                    _ => {
+                        // Check if file is open
+                        let f_table = GLOBALFILETABLE.rlock();
+                        let fd_glob = f_table.table.iter().position(|r| r.name == path_u8);
+                        // CASE: File is not open
+                        // -> Delete File
+                        if !fd_glob.is_some() {
+                            drop(Box::from_raw(node.unwrap()));
+                            if root { fn_table.delete(&chunk_u8); } else { dir_table.delete(&chunk_u8) }
+                            println!("File '{}' was deleted", chunk);
+                            // CASE: File is open
+                        } else {
+                            println!("File '{}' is currently open and cannot be deleted", chunk)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Opens File, returns Option<File Descriptor>
+pub fn open(path: &str) -> Option<usize> {
     // Lock GLOBALFILETABLE and check if file is already open
     // If its open there has to be an entry with the corresponding filename
-    let mut f_table = GLOBALFILETABLE.wlock();
-    let file_name_u8 = str_to_u8(file_name);
+    let file_name_u8 = str_to_u8(path);
     let fd_loc;
+    let mut f_table = GLOBALFILETABLE.wlock();
     let mut fd_glob = f_table.table.iter().position(|r| r.name == file_name_u8);
-    // If global FD for the file already exists, save global FD in LOCALFILETABLE
-    // Return the corresponding Local File Descriptor
+    // CASE: A global FD for the file exists -> File is already open
+    // -> Save global FD in LOCALFILETABLE
+    // -> Return the corresponding Local File Descriptor
     if let Some(x) = fd_glob {
         unsafe {fd_loc = LOCALFILETABLE.add_entry(x)}
-        return fd_loc
+        return Some(fd_loc)
     }
 
-    // If FD for the file doesn't exist:
-    // Search pointer to node by filename in FILENAMETABLE
-    let mut fn_table = FILENAMETABLE.rlock();
-    let node = fn_table.get_mut(&file_name_u8);
-    // Create a new entry in the Globalfiletable and the Localfiletable
-    if let Some(x) = node {
-        // let copy = x.clone();
-        //fd_glob = f_table.set_entry(node, file_name_u8);
-        fd_glob = f_table.add_file_description(x, file_name_u8);
-        unsafe {fd_loc = LOCALFILETABLE.add_entry(fd_glob.unwrap())}
+    // CASE: The file isn't already open
+    // -> Validate Path and open the file corresponding to the last element of the path
+    let mut root = true;
+    let mut node;
+    // FileNameTable of current directory
+    let mut dir_table = &NameTable::new();
+    // Root FileNameTable
+    let fn_table = FILENAMETABLE.rlock();
 
-        return fd_loc
+    let mut chunks = path.split("/").peekable();
+    while let Some(chunk) = chunks.next() {
+
+        let chunk_u8 = str_to_u8(chunk);
+        // CASE: Last Element of Path hasn't been reached yet
+        // -> Validate Path,
+        if chunks.peek().is_some() {
+            // CASE: Current directory is a first level directory
+            // ->  Lookup in global FILENAMETABLE
+            if root {
+                root = false;
+                node = fn_table.get_mut(&chunk_u8);
+            }
+            // CASE: Current directory is not a firs level directory
+            // -> Lookup in NameTable of the previous directory
+            else {
+                node = dir_table.get_mut(&chunk_u8);
+            }
+            // CASE: There is no file at this position with this name
+            if !node.is_some() {
+                println!("Directory: '{}' doesn't exist", chunk);
+                return None;
+            }
+
+            //Set the FileNameTable of current directory new if valid
+            unsafe {
+                match  &*(node.unwrap()) {
+                    &Node::Directory(ref d) => {dir_table = &d.0},
+                    _=> {
+                        println!("'{}' is no directory", chunk);
+                        return None
+                    }
+                }
+            }
+
+        }
+        // CASE: Last Element of Path (= the file to open) has been reached
+        else {
+            // Get the pointer to the file from the root FileNameTable or from the
+            // parent directory
+            if root {
+                node = fn_table.get_mut(&chunk_u8);
+            }
+            else {
+                node = dir_table.get_mut(&chunk_u8);
+            }
+            if !node.is_some() {
+                println!("'{}' doesn't exist", chunk);
+                return None
+            }
+
+
+            unsafe {
+                if (*(node).unwrap()).is_directory() {
+                    println!("'{}' is a directory", chunk);
+                    return None
+                }
+                // Add File Description in GlobalFileTable
+                fd_glob = f_table.add_file_description(node.unwrap(), file_name_u8);
+                // Add Global File Descriptor to LocalFileTable
+                fd_loc = LOCALFILETABLE.add_entry(fd_glob.unwrap())}
+            return Some(fd_loc);
+        }
     }
-    panic!("File doesn't exist")
+    unreachable!("FILESYSTEM FAILURE");
 }
 
 
@@ -148,7 +428,11 @@ pub fn write(fd: usize, _offset: usize, data: &str ) {
         println!("File is locked");
     }
     // Write to the pointer
-    unsafe{(*(node.unwrap())).0 = data_u8;}
+    unsafe {
+        match *(node.unwrap()) {
+            Node::File(ref mut f) => f.0 = data_u8,
+            _ => panic!("UNEXPECTED DIRECTORY")}
+    }
     // Release Lock of the file
     guard.return_w_access(fd_glob);
 }
@@ -170,7 +454,14 @@ pub fn read(fd: usize, _offset: usize) -> Option<[u8;1024]>{
     }
 
     // Get data from node and return
-    let data = unsafe{(*(node.unwrap())).0};
+    let data;
+    unsafe {
+        match *node.unwrap() {
+            Node::File(ref f) => {
+                data = f.0
+            },
+            _ => panic!("UNEXPECTED DIRECTORY")
+        } }
     guard.return_r_access(fd_glob);
     Some(data)
 }
@@ -185,7 +476,7 @@ pub unsafe fn set_active_task (id: u64) {
 
 // Entry in GLOBALFILETABLE
 struct FileDescription {
-    node:  *mut FileNode,
+    node:  *mut Node,
     name: [u8;32],
     reads: AtomicUsize,
     open: AtomicUsize,
@@ -194,12 +485,12 @@ struct FileDescription {
 
 
 impl FileDescription {
-    pub const fn new(node: *mut FileNode, file_name:[u8;32]) -> FileDescription
+    pub const fn new(node: *mut Node, path:[u8;32]) -> FileDescription
     {
         FileDescription
         {
-            node: node,
-            name: file_name,
+            node,
+            name: path,
             reads: AtomicUsize::new(0),
             open: AtomicUsize::new(1),
             writes: AtomicBool::new(false)
@@ -211,7 +502,7 @@ pub struct NameTable([NameEntry;100]);
 
 pub struct NameEntry{
     path: [u8;32],
-    node: *mut FileNode
+    node: *mut Node
 }
 
 
@@ -220,14 +511,15 @@ impl NameTable{
     pub const fn new() -> NameTable {
         NameTable([NameEntry{node: null_mut(), path:[0;32] }; 100])
     }
-    fn insert(&mut self, path: [u8;32], node: *mut FileNode) {
+
+    fn insert(&mut self, path: [u8;32], node: *mut Node) {
         //search for empty entry
         let index = self.0.iter().position(|r| r.path ==[0;32]).unwrap();
         // Replace empty entry with new entry
         self.0[index] = NameEntry{node: node, path: path}
     }
 
-    fn get_mut(&mut self, path: &[u8;32]) -> Option<*mut FileNode>{
+    fn get_mut(&self, path: &[u8;32]) -> Option<*mut Node>{
         // search for path
         let index = self.0.iter().position(|r| r.path == *path);
         // return pointer to node
@@ -235,6 +527,11 @@ impl NameTable{
             Some(x) => Some(self.0[x].node),
             None => None,
         }
+    }
+
+    fn delete(&mut self, path: &[u8;32]) {
+        let index = self.0.iter().position(|r| r.path == *path).unwrap();
+        self.0[index] = NameEntry{node: null_mut(), path: [0;32]}
     }
 }
 
@@ -292,7 +589,7 @@ impl FileTable {
     }
 
     // Returns pointer to node, if entry isn't locked by Write
-    fn get_r_access(&mut self, fd: usize) -> Option<*mut FileNode> {
+    fn get_r_access(&mut self, fd: usize) -> Option<*mut Node> {
         // Make sure there is no WRITE on the file
         if self.table[fd].writes.load(Ordering::Acquire) == true
         {
@@ -317,7 +614,7 @@ impl FileTable {
     }
 
     // Returns pointer to node, if entry isn't locked by Write or READ
-    fn get_w_access(&mut self, fd: usize) -> Option<*mut FileNode> {
+    fn get_w_access(&mut self, fd: usize) -> Option<*mut Node> {
         // Try to lock read
         if self.table[fd].writes.compare_and_swap(false, true, Ordering::Acquire) != false
         {
@@ -338,7 +635,7 @@ impl FileTable {
         self.table[fd].writes.store(false, Ordering::Relaxed);
     }
 
-    fn add_file_description(&mut self, node: *mut FileNode, file_name : [u8;32]) -> Option<usize>
+    fn add_file_description(&mut self, node: *mut Node, file_name : [u8;32]) -> Option<usize>
     {
         //search for empty file descriptor position
         let fd_glob = self.table.iter().position(|r| r.name ==[0;32]);
@@ -354,4 +651,18 @@ impl FileTable {
 #[derive( Clone, Copy)]
 pub struct FileNode([u8;1024]);
 
+pub struct DirectoryNode(NameTable);
 
+pub enum Node{
+    File(FileNode),
+    Directory(DirectoryNode),
+}
+
+impl Node {
+    fn is_directory(&self) -> bool {
+        match self {
+            Node::Directory(_d) => true,
+            _ => false
+        }
+    }
+}
