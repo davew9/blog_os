@@ -3,7 +3,7 @@ use crate::memory::BootInfoFrameAllocator;
 
 pub struct FileListNode {
     size: usize,
-    data: Option<&'static mut Box<char>>,
+    data: char,
     next: Option<&'static mut FileListNode>
 }
 
@@ -13,7 +13,7 @@ pub struct File{
 }
 
 impl FileListNode {
-    pub const fn new(size: usize, data: Box<char>) -> Self{FileListNode {size, data: Some(char), next: None }}
+    pub const fn new(size: usize, data: char) -> Self{FileListNode {size, data, next: None }}
     pub fn start_addr(&self) -> usize {
         self as *const Self as usize
     }
@@ -23,13 +23,13 @@ impl FileListNode {
 }
 
 impl File {
-    pub const fn new(name: u8) -> Self{File{name, file: Some(&mut FileListNode::new(1, Box::new('c')))}}
+    pub const fn new(name: u8) -> Self{File{name, file: Some(&mut FileListNode::new(1, 'a'))}}
 
     pub fn write(&mut self, data: char) {
         let node = &mut self.file;
 
         if node.data == None {
-            node.data = Some(&mut Box::new(data));
+            node.data = 'b';
         }
     }
 
@@ -37,7 +37,7 @@ impl File {
         let mut content_vec: Vec<char> = Vec::new();
 
         for i in 0..length {
-            content_vec.push(*self.file.data);
+            content_vec.push(self.file.data);
         }
 
         content_vec
