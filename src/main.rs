@@ -39,7 +39,7 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     executor.spawn(Task::new(example_task3()));
     executor.spawn(Task::new(keyboard::print_keypresses()));
 
-    executor.spawn(Task::new(example_task_dw()));
+    executor.spawn(Task::new(example_task_file_type()));
     executor.run();
 }
 
@@ -121,25 +121,35 @@ async fn example_task3() {
     filesystem::delete("1/2/3/4/5");
 }
 
-async fn example_task_dw() {
+async fn example_task_file_type() {
     use filesystem::file::File;
-    use blog_os::filesystem::file::createFile;
 
-    let mut test_file = createFile("Name");
+    // INHALT 1 - SCHREIBEN UND LESEN
+    let mut test_file = File::new();
     test_file.write("aaaaaaaaaaaaaaaaaaaaa");
 
     let content = test_file.read(1);
 
-    println!("Content of DW-TEST-FILE:");
+    println!("Content of TEST-FILE:");
     for letter in content {
         print_bytes(&letter)
     }
 
+    // INHALT 2 - SCHREIBEN, LEEREN UND LESEN -> KEINE AUSGABE
     test_file.write("test");
     test_file.empty();
     let content = test_file.read(1);
 
-    println!("Content of DW-TEST-FILE:");
+    println!("Content of TEST-FILE:");
+    for letter in content {
+        print_bytes(&letter)
+    }
+
+    // INHALT 3 - SCHREIBEN ÜBER MEHERERE NODS, LESEN
+    test_file.write("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbZZZZbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaabbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbZZZbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbZZZ");
+    let content = test_file.read(3);
+
+    println!("Content of TEST-FILE:");
     for letter in content {
         print_bytes(&letter)
     }
