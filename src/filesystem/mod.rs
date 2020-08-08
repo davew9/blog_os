@@ -4,15 +4,11 @@ use lazy_static::lazy_static;
 use core::sync::atomic::{AtomicUsize, Ordering, AtomicBool};
 use core::option::Option;
 use self::lock::{RWLock};
-use crate::vga_buffer::print_bytes;
 use core::ptr::null_mut;
 use alloc::boxed::Box;
 
-
 pub mod lock;
 pub mod file;
-
-
 
 lazy_static! {
 

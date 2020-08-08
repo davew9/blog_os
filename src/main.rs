@@ -1,3 +1,4 @@
+
 #![no_std]
 #![no_main]
 #![feature(custom_test_frameworks)]
@@ -10,7 +11,8 @@ use blog_os::println;
 use blog_os::task::{executor::Executor, keyboard, Task};
 use bootloader::{entry_point, BootInfo};
 use core::panic::PanicInfo;
-use blog_os::filesystem::file::File;
+use blog_os::vga_buffer::print_bytes;
+use blog_os::filesystem;
 
 entry_point!(kernel_main);
 
@@ -29,14 +31,15 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     allocator::init_heap(&mut mapper, &mut frame_allocator).expect("heap initialization failed");
 
     #[cfg(test)]
-    test_main();
+        test_main();
 
     let mut executor = Executor::new();
     executor.spawn(Task::new(example_task()));
-    executor.spawn(Task::new(example_file_task()));
     executor.spawn(Task::new(example_task2()));
     executor.spawn(Task::new(example_task3()));
     executor.spawn(Task::new(keyboard::print_keypresses()));
+
+    executor.spawn(Task::new(example_task_dw()));
     executor.run();
 }
 
@@ -59,25 +62,6 @@ async fn async_number() -> u32 {
 }
 
 async fn example_task() {
-    use blog_os::filesystem;
-    let number = async_number().await;
-    println!("async number: {}", number);
-    println!("async number: {}", number);
-    filesystem::create("test");
-    let res = filesystem::open("test");
-    println!("file descriptor: {}", res);
-    let res2 = filesystem::open("test2");
-    println!("file2 descriptor: {}", res2);
-}
-
-
-async fn example_file_task() {
-    use blog_os::filesystem::file;
-
-    let test = File(5);
-    test.write('a');
-
-    println!(test.read(1));
     println!("creating the file test1 and test 2 in task1");
     filesystem::create("test1");
     // filesystem::create("test2");
@@ -135,6 +119,30 @@ async fn example_task3() {
     filesystem::delete("1/2/3/4/5");
     filesystem::delete("1/2/3/4/5/6");
     filesystem::delete("1/2/3/4/5");
+}
+
+async fn example_task_dw() {
+    use filesystem::file::File;
+    use blog_os::filesystem::file::createFile;
+
+    let mut test_file = createFile("Name");
+    test_file.write("aaaaaaaaaaaaaaaaaaaaa");
+
+    let content = test_file.read(1);
+
+    println!("Content of DW-TEST-FILE:");
+    for letter in content {
+        print_bytes(&letter)
+    }
+
+    test_file.write("test");
+    test_file.empty();
+    let content = test_file.read(1);
+
+    println!("Content of DW-TEST-FILE:");
+    for letter in content {
+        print_bytes(&letter)
+    }
 }
 
 #[test_case]
