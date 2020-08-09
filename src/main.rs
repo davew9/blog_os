@@ -57,6 +57,7 @@ fn panic(info: &PanicInfo) -> ! {
     blog_os::test_panic_handler(info)
 }
 
+#[allow(dead_code)]
 async fn async_number() -> u32 {
     42
 }
@@ -124,9 +125,10 @@ async fn example_task3() {
 async fn example_task_file_type() {
     use filesystem::file::File;
 
-    // INHALT 1 - SCHREIBEN UND LESEN
+    // INHALT 1 - SCHREIBEN, LEEREN UND LESEN
     let mut test_file = File::new();
     test_file.write("aaaaaaaaaaaaaaaaaaaaa");
+    test_file.empty();
 
     let content = test_file.read(1);
 
@@ -135,9 +137,9 @@ async fn example_task_file_type() {
         print_bytes(&letter)
     }
 
-    // INHALT 2 - SCHREIBEN, LEEREN UND LESEN -> KEINE AUSGABE
+    // INHALT 2 - SCHREIBEN, ANFÜGEN, LESEN
     test_file.write("test");
-    test_file.empty();
+    test_file.append("abcde");
     let content = test_file.read(1);
 
     println!("Content of TEST-FILE:");
