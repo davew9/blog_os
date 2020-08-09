@@ -37,9 +37,8 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     executor.spawn(Task::new(example_task()));
     executor.spawn(Task::new(example_task2()));
     executor.spawn(Task::new(example_task3()));
-    executor.spawn(Task::new(keyboard::print_keypresses()));
-
     executor.spawn(Task::new(example_task_file_type()));
+    executor.spawn(Task::new(keyboard::print_keypresses()));
     executor.run();
 }
 
