@@ -81,61 +81,61 @@ pub fn create(path: &str) {
 
     // Iterate over all Directory/Files of the given Path
     while let Some(chunk) = chunks.next() {
-        let chunk_u8 = str_to_u8(chunk);
-        // CASE: There is a following Directory/File: Current chunk has to represent a directory
-        if chunks.peek().is_some() {
-            // CASE: It is a first level directory
-            // -> Lookup in Global Root FileNameTable
-            if root {
-                node = fn_table.get_mut(&chunk_u8);
-            }
-            // CASE: It is not a first level directory
-            // ->  Lookup in NameTable of previous node
-            else {
-                node = dir_table.get_mut(&chunk_u8);
-            }
-
-            // CASE: There was no directory/file with this name
-            // -> Create the directory at the corresponding level
-            if !node.is_some() {
-                let new_node: Box<Node> = Box::new(Node::Directory(DirectoryNode(NameTable::new())));
-                let new_node: *mut Node = Box::into_raw(new_node);
+        if chunk.len() > 0 {
+            let chunk_u8 = str_to_u8(chunk);
+            // CASE: There is a following Directory/File: Current chunk has to represent a directory
+            if chunks.peek().is_some() {
+                // CASE: It is a first level directory
+                // -> Lookup in Global Root FileNameTable
                 if root {
-                    fn_table.insert(chunk_u8, new_node);
+                    node = fn_table.get_mut(&chunk_u8);
                 }
+                // CASE: It is not a first level directory
+                // ->  Lookup in NameTable of previous node
                 else {
-                    dir_table.insert(chunk_u8, new_node);
+                    node = dir_table.get_mut(&chunk_u8);
                 }
-                node = Some(new_node);
-                println!("Directory '{}' was created", chunk);
-            }
-            root = false;
 
-            // CASE: There was a node with this file, but its not a directory node
-            unsafe {
-                match  *(node.unwrap()) {
-                    Node::Directory(ref mut d) => {dir_table = &mut d.0},
-                    _ => panic!("'{}' is no directory", chunk)
+                // CASE: There was no directory/file with this name
+                // -> Create the directory at the corresponding level
+                if !node.is_some() {
+                    let new_node: Box<Node> = Box::new(Node::Directory(DirectoryNode(NameTable::new())));
+                    let new_node: *mut Node = Box::into_raw(new_node);
+                    if root {
+                        fn_table.insert(chunk_u8, new_node);
+                    } else {
+                        dir_table.insert(chunk_u8, new_node);
+                    }
+                    node = Some(new_node);
+                    println!("Directory '{}' was created", chunk);
                 }
-            }
+                root = false;
 
-            //CASE: There is no following Directory/File: Current chunk represents the file to be created
-        } else {
-            // Create an Empty File
-            let node: Box<Node> = Box::new(Node::File(FileNode([0;1024])));
-            let node: *mut Node = Box::into_raw(node);
-            //CASE: The file is located at first level
-            //Create the file and store the pointer in the Root FileNameTable
-            if root {
-                fn_table.insert(chunk_u8, node);
-            }
-            //CASE: The file is not located at firs level
-            //Create the file and store the pointer in the FileTable of the previous directory
-            else {
-                dir_table.insert(chunk_u8, node);
-            }
-            println!("File '{}' was created", chunk)
+                // CASE: There was a node with this file, but its not a directory node
+                unsafe {
+                    match *(node.unwrap()) {
+                        Node::Directory(ref mut d) => { dir_table = &mut d.0 },
+                        _ => panic!("'{}' is no directory", chunk)
+                    }
+                }
 
+                //CASE: There is no following Directory/File: Current chunk represents the file to be created
+            } else {
+                // Create an Empty File
+                let node: Box<Node> = Box::new(Node::File(FileNode([0; 1024])));
+                let node: *mut Node = Box::into_raw(node);
+                //CASE: The file is located at first level
+                //Create the file and store the pointer in the Root FileNameTable
+                if root {
+                    fn_table.insert(chunk_u8, node);
+                }
+                //CASE: The file is not located at firs level
+                //Create the file and store the pointer in the FileTable of the previous directory
+                else {
+                    dir_table.insert(chunk_u8, node);
+                }
+                println!("File '{}' was created", chunk)
+            }
         }
     }
 }
@@ -154,63 +154,147 @@ pub fn create_dir(path: &str) {
 
     // Iterate over all Directory/Files of the given Path
     while let Some(chunk) = chunks.next() {
-        let chunk_u8 = str_to_u8(chunk);
-        // CASE: There is a following Directory/File: Current chunk has to represent a directory
-        if chunks.peek().is_some() {
-            // CASE: It is a first level directory
-            // -> Lookup in Global Root FileNameTable
-            if root {
-                node = fn_table.get_mut(&chunk_u8);
-            }
-            // CASE: It is not a first level directory
-            // ->  Lookup in NameTable of previous node
-            else {
-                node = dir_table.get_mut(&chunk_u8);
-            }
-
-            // CASE: There was no directory/file with this name
-            // -> Create the directory at the corresponding level
-            if !node.is_some() {
-                let new_node: Box<Node> = Box::new(Node::Directory(DirectoryNode(NameTable::new())));
-                let new_node: *mut Node = Box::into_raw(new_node);
+        if chunk.len() > 0 {
+            let chunk_u8 = str_to_u8(chunk);
+            // CASE: There is a following Directory/File: Current chunk has to represent a directory
+            if chunks.peek().is_some() {
+                // CASE: It is a first level directory
+                // -> Lookup in Global Root FileNameTable
                 if root {
-                    fn_table.insert(chunk_u8, new_node);
+                    node = fn_table.get_mut(&chunk_u8);
                 }
+                // CASE: It is not a first level directory
+                // ->  Lookup in NameTable of previous node
                 else {
-                    dir_table.insert(chunk_u8, new_node);
+                    node = dir_table.get_mut(&chunk_u8);
                 }
-                node = Some(new_node);
-                println!("Directory '{}' was created", chunk);
-            }
-            root = false;
 
-            // CASE: There was a node with this file, but its not a directory node
-            unsafe {
-                match  *(node.unwrap()) {
-                    Node::Directory(ref mut d) => {dir_table = &mut d.0},
-                    _ => panic!("'{}' is no directory", chunk)
+                // CASE: There was no directory/file with this name
+                // -> Create the directory at the corresponding level
+                if !node.is_some() {
+                    let new_node: Box<Node> = Box::new(Node::Directory(DirectoryNode(NameTable::new())));
+                    let new_node: *mut Node = Box::into_raw(new_node);
+                    if root {
+                        fn_table.insert(chunk_u8, new_node);
+                    } else {
+                        dir_table.insert(chunk_u8, new_node);
+                    }
+                    node = Some(new_node);
+                    println!("Directory '{}' was created", chunk);
                 }
-            }
+                root = false;
 
-            //CASE: There is no following Directory/File: Current chunk represents the file to be created
-        } else {
-            // Create an Empty Directory
-            let node: Box<Node> = Box::new(Node::Directory(DirectoryNode(NameTable::new())));
-            let node: *mut Node = Box::into_raw(node);
-            //CASE: The directory is located at first level
-            //Create the directory and store the pointer in the Root FileNameTable
-            if root {
-                fn_table.insert(chunk_u8, node);
-            }
-            //CASE: The directory is not located at firs level
-            //Create the directory and store the pointer in the FileTable of the previous directory
-            else {
-                dir_table.insert(chunk_u8, node);
-            }
-            println!("Directory '{}' has been created", chunk)
+                // CASE: There was a node with this file, but its not a directory node
+                unsafe {
+                    match *(node.unwrap()) {
+                        Node::Directory(ref mut d) => { dir_table = &mut d.0 },
+                        _ => panic!("'{}' is no directory", chunk)
+                    }
+                }
 
+                //CASE: There is no following Directory/File: Current chunk represents the file to be created
+            } else {
+                // Create an Empty Directory
+                let node: Box<Node> = Box::new(Node::Directory(DirectoryNode(NameTable::new())));
+                let node: *mut Node = Box::into_raw(node);
+                //CASE: The directory is located at first level
+                //Create the directory and store the pointer in the Root FileNameTable
+                if root {
+                    fn_table.insert(chunk_u8, node);
+                }
+                //CASE: The directory is not located at firs level
+                //Create the directory and store the pointer in the FileTable of the previous directory
+                else {
+                    dir_table.insert(chunk_u8, node);
+                }
+                println!("Directory '{}' was created", chunk)
+            }
         }
     }
+}
+
+// Validates the path to a directory (Used by CLI)
+pub fn validate_path(path: &str) -> bool {
+    let mut node;
+    let mut root = true;
+    // FileNameTable of current directory
+    let mut dir_table = &mut NameTable::new();
+    // Root FileNameTable
+    let fn_table = FILENAMETABLE.wlock();
+    // CASE: Path is root
+    if path == "/"{
+        return true;
+    }
+
+    // Iterate over substrings of path
+    let mut chunks = path.split("/").peekable();
+    while let Some(chunk) = chunks.next() {
+        if chunk.chars().count() > 0 {
+            let chunk_u8 = str_to_u8(chunk);
+            // CASE: Last Element of Path hasn't been reached yet
+            // -> Validate Path, Reset the FileNameTable of current directory if valid
+            //    directory is encountered
+            if chunks.peek().is_some() {
+                if root {
+                    node = fn_table.get_mut(&chunk_u8);
+                } else {
+                    node = dir_table.get_mut(&chunk_u8);
+                }
+                if !node.is_some() {
+                    println!("Directory: '{}' doesn't exist", chunk);
+                    return false;
+                }
+
+                unsafe {
+                    match *(node.unwrap()) {
+                        Node::Directory(ref mut d) => { dir_table = &mut d.0 },
+                        _ => {
+                            println!("'{}' is no directory", chunk);
+                            return false;
+                        }
+                    }
+                }
+                root = false;
+            }
+
+
+            // CASE:  Last Element of Path has been reached
+            else {
+                // CASE: Element is located at first level
+                // -> lookup in Root FileNameTable
+                if root {
+                    node = fn_table.get_mut(&chunk_u8);
+                }
+                // CASE: Element is not located at first level
+                // -> lookup in FileNameTable of previous DirectoryNOde
+                else {
+                    node = dir_table.get_mut(&chunk_u8);
+                }
+                // CASE: Directory doesn't exist
+                if !node.is_some() {
+                    println!(" '{}' doesn't exist", chunk);
+                    return false;
+                }
+
+                unsafe {
+                    match  &*(node.unwrap()) {
+                        // CASE: Last Substring represents valid Directory
+                        Node::Directory(ref _d) => {
+                            return true;
+                        },
+
+                        // CASE: Last Substring refers to a File
+                        _ => {
+                            println!(" '{}' is a file", chunk);
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    println!("Invalid Path");
+    return false;
 }
 
 // Deletes the Directory/File specified by the last part of the path string
@@ -225,76 +309,78 @@ pub fn delete(path: &str) {
 
     let mut chunks = path.split("/").peekable();
     while let Some(chunk) = chunks.next() {
-        let chunk_u8 = str_to_u8(chunk);
-        // CASE: Last Element of Path hasn't been reached yet
-        // -> Validate Path, Reset the FileNameTable of current directory if valid
-        //    directory is encountered
-        if chunks.peek().is_some() {
-            if root {
-                node = fn_table.get_mut(&chunk_u8);
-            } else {
-                node = dir_table.get_mut(&chunk_u8);
-            }
-            if !node.is_some() {
-                println!("Directory: '{}' doesn't exist", chunk)
-            }
-
-            unsafe {
-                match *(node.unwrap()) {
-                    Node::Directory(ref mut d) => { dir_table = &mut d.0 },
-                    _ => println!("'{}' is no directory", chunk)
+        if chunk.len() > 0 {
+            let chunk_u8 = str_to_u8(chunk);
+            // CASE: Last Element of Path hasn't been reached yet
+            // -> Validate Path, Reset the FileNameTable of current directory if valid
+            //    directory is encountered
+            if chunks.peek().is_some() {
+                if root {
+                    node = fn_table.get_mut(&chunk_u8);
+                } else {
+                    node = dir_table.get_mut(&chunk_u8);
                 }
+                if !node.is_some() {
+                    println!("Directory: '{}' doesn't exist", chunk)
+                }
+
+                unsafe {
+                    match *(node.unwrap()) {
+                        Node::Directory(ref mut d) => { dir_table = &mut d.0 },
+                        _ => println!("'{}' is no directory", chunk)
+                    }
+                }
+                root = false;
             }
-            root = false;
-        }
 
 
-        // CASE:  Last Element of Path (=the Element to delete) has been reached
-        else {
-            // CASE: Element is located at first level
-            // -> lookup in Root FileNameTable
-            if root {
-                node = fn_table.get_mut(&chunk_u8);
-            }
-            // CASE: Element is not located at first level
-            // -> lookup in FileNameTable of previous DirectoryNOde
+            // CASE:  Last Element of Path (=the Element to delete) has been reached
             else {
-                node = dir_table.get_mut(&chunk_u8);
-            }
-            // CASE: Directory or File doesn't exist
-            if !node.is_some() {
-                println!(" '{}' doesn't exist", chunk);
-                return;
-            }
+                // CASE: Element is located at first level
+                // -> lookup in Root FileNameTable
+                if root {
+                    node = fn_table.get_mut(&chunk_u8);
+                }
+                // CASE: Element is not located at first level
+                // -> lookup in FileNameTable of previous DirectoryNOde
+                else {
+                    node = dir_table.get_mut(&chunk_u8);
+                }
+                // CASE: Directory or File doesn't exist
+                if !node.is_some() {
+                    println!(" '{}' doesn't exist", chunk);
+                    return;
+                }
 
-            unsafe {
-                match  &*(node.unwrap()) {
-                    // CASE: Object to delete is directory
-                    Node::Directory(ref d) => {
-                        let index = (d.0).0.iter().position(|r| r.path != [0; 32]);
-                        // CASE: Directory is empty
-                        // -> Delete Directory
-                        if !index.is_some() {
-                            drop(Box::from_raw(node.unwrap()));
-                            if root { fn_table.delete(&chunk_u8); } else { dir_table.delete(&chunk_u8) }
-                            println!("Directory '{}' was deleted", chunk);
-                            // CASE: Directory is not empty
-                        } else { println!("Directory '{}' contains Files and cannot be deleted", chunk) }
-                    },
-                    // CASE: Object to delete is file
-                    _ => {
-                        // Check if file is open
-                        let f_table = GLOBALFILETABLE.rlock();
-                        let fd_glob = f_table.table.iter().position(|r| r.name == path_u8);
-                        // CASE: File is not open
-                        // -> Delete File
-                        if !fd_glob.is_some() {
-                            drop(Box::from_raw(node.unwrap()));
-                            if root { fn_table.delete(&chunk_u8); } else { dir_table.delete(&chunk_u8) }
-                            println!("File '{}' was deleted", chunk);
-                            // CASE: File is open
-                        } else {
-                            println!("File '{}' is currently open and cannot be deleted", chunk)
+                unsafe {
+                    match &*(node.unwrap()) {
+                        // CASE: Object to delete is directory
+                        Node::Directory(ref d) => {
+                            let index = (d.0).0.iter().position(|r| r.path != [0; 32]);
+                            // CASE: Directory is empty
+                            // -> Delete Directory
+                            if !index.is_some() {
+                                drop(Box::from_raw(node.unwrap()));
+                                if root { fn_table.delete(&chunk_u8); } else { dir_table.delete(&chunk_u8) }
+                                println!("Directory '{}' was deleted", chunk);
+                                // CASE: Directory is not empty
+                            } else { println!("Directory '{}' contains Files and cannot be deleted", chunk) }
+                        },
+                        // CASE: Object to delete is file
+                        _ => {
+                            // Check if file is open
+                            let f_table = GLOBALFILETABLE.rlock();
+                            let fd_glob = f_table.table.iter().position(|r| r.name == path_u8);
+                            // CASE: File is not open
+                            // -> Delete File
+                            if !fd_glob.is_some() {
+                                drop(Box::from_raw(node.unwrap()));
+                                if root { fn_table.delete(&chunk_u8); } else { dir_table.delete(&chunk_u8) }
+                                println!("File '{}' was deleted", chunk);
+                                // CASE: File is open
+                            } else {
+                                println!("File '{}' is currently open and cannot be deleted", chunk)
+                            }
                         }
                     }
                 }
@@ -330,69 +416,70 @@ pub fn open(path: &str) -> Option<usize> {
 
     let mut chunks = path.split("/").peekable();
     while let Some(chunk) = chunks.next() {
+        if chunk.len() > 0 {
+            let chunk_u8 = str_to_u8(chunk);
+            // CASE: Last Element of Path hasn't been reached yet
+            // -> Validate Path,
+            if chunks.peek().is_some() {
+                // CASE: Current directory is a first level directory
+                // ->  Lookup in global FILENAMETABLE
+                if root {
+                    root = false;
+                    node = fn_table.get_mut(&chunk_u8);
+                }
+                // CASE: Current directory is not a firs level directory
+                // -> Lookup in NameTable of the previous directory
+                else {
+                    node = dir_table.get_mut(&chunk_u8);
+                }
+                // CASE: There is no file at this position with this name
+                if !node.is_some() {
+                    println!("Directory: '{}' doesn't exist", chunk);
+                    return None;
+                }
 
-        let chunk_u8 = str_to_u8(chunk);
-        // CASE: Last Element of Path hasn't been reached yet
-        // -> Validate Path,
-        if chunks.peek().is_some() {
-            // CASE: Current directory is a first level directory
-            // ->  Lookup in global FILENAMETABLE
-            if root {
-                root = false;
-                node = fn_table.get_mut(&chunk_u8);
-            }
-            // CASE: Current directory is not a firs level directory
-            // -> Lookup in NameTable of the previous directory
-            else {
-                node = dir_table.get_mut(&chunk_u8);
-            }
-            // CASE: There is no file at this position with this name
-            if !node.is_some() {
-                println!("Directory: '{}' doesn't exist", chunk);
-                return None;
-            }
-
-            //Set the FileNameTable of current directory new if valid
-            unsafe {
-                match  &*(node.unwrap()) {
-                    &Node::Directory(ref d) => {dir_table = &d.0},
-                    _=> {
-                        println!("'{}' is no directory", chunk);
-                        return None
+                //Set the FileNameTable of current directory new if valid
+                unsafe {
+                    match &*(node.unwrap()) {
+                        &Node::Directory(ref d) => { dir_table = &d.0 },
+                        _ => {
+                            println!("'{}' is no directory", chunk);
+                            return None
+                        }
                     }
                 }
             }
-
-        }
-        // CASE: Last Element of Path (= the file to open) has been reached
-        else {
-            // Get the pointer to the file from the root FileNameTable or from the
-            // parent directory
-            if root {
-                node = fn_table.get_mut(&chunk_u8);
-            }
+            // CASE: Last Element of Path (= the file to open) has been reached
             else {
-                node = dir_table.get_mut(&chunk_u8);
-            }
-            if !node.is_some() {
-                println!("'{}' doesn't exist", chunk);
-                return None
-            }
-
-
-            unsafe {
-                if (*(node).unwrap()).is_directory() {
-                    println!("'{}' is a directory", chunk);
+                // Get the pointer to the file from the root FileNameTable or from the
+                // parent directory
+                if root {
+                    node = fn_table.get_mut(&chunk_u8);
+                } else {
+                    node = dir_table.get_mut(&chunk_u8);
+                }
+                if !node.is_some() {
+                    println!("'{}' doesn't exist", chunk);
                     return None
                 }
-                // Add File Description in GlobalFileTable
-                fd_glob = f_table.add_file_description(node.unwrap(), file_name_u8);
-                // Add Global File Descriptor to LocalFileTable
-                fd_loc = LOCALFILETABLE.add_entry(fd_glob.unwrap())}
-            return Some(fd_loc);
+
+
+                unsafe {
+                    if (*(node).unwrap()).is_directory() {
+                        println!("'{}' is a directory", chunk);
+                        return None
+                    }
+                    // Add File Description in GlobalFileTable
+                    fd_glob = f_table.add_file_description(node.unwrap(), file_name_u8);
+                    // Add Global File Descriptor to LocalFileTable
+                    fd_loc = LOCALFILETABLE.add_entry(fd_glob.unwrap())
+                }
+                return Some(fd_loc);
+            }
         }
     }
-    unreachable!("FILESYSTEM FAILURE");
+    println!("Invalid Path");
+    return None;
 }
 
 

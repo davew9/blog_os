@@ -10,6 +10,7 @@
 #![reexport_test_harness_main = "test_main"]
 #![feature(renamed_spin_loop)]
 
+
 extern crate alloc;
 extern crate rlibc;
 
@@ -24,6 +25,7 @@ pub mod serial;
 pub mod vga_buffer;
 pub mod filesystem;
 pub mod task;
+pub mod cli;
 
 pub fn init() {
     gdt::init();
