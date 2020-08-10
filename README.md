@@ -1,12 +1,23 @@
-# Blog OS (Async/Await)
+# Blog OS Filesystem Extension
 
-[![Build Status](https://github.com/phil-opp/blog_os/workflows/Build%20Code/badge.svg?branch=post-12)](https://github.com/phil-opp/blog_os/actions?query=workflow%3A%22Build+Code%22+branch%3Apost-12)
+This repository contains the source code for a Filesystem Extension for the Rust OS written by Phillip Oppermann.
 
-This repository contains the source code for the [Async/Await][post] post of the [Writing an OS in Rust](https://os.phil-opp.com) series.
+**Check out the [master branch](https://github.com/phil-opp/blog_os) or the associated [blog](https://os.phil-opp.com) for more  information about the project by Phillip Oppermann.**
 
-[post]: https://os.phil-opp.com/async-await/
 
-**Check out the [master branch](https://github.com/phil-opp/blog_os) for more information.**
+
+# Offered Functionality/API
+open()
+write()
+read()
+rm()
+create_dir()
+create()
+# Implementation Details
+## Important Strcuts
+Tables
+# Disclaimer
+Was geht nicht
 
 ## Building
 
