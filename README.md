@@ -4,20 +4,29 @@ This repository contains the source code for a Filesystem Extension for the Rust
 
 **Check out the [master branch](https://github.com/phil-opp/blog_os) or the associated [blog](https://os.phil-opp.com) for more  information about the project by Phillip Oppermann.**
 
+# Summary
+This extension contains a simple in-memory filesystem, which offers methods to create, edit and delete files. Furthermore a directory system is implemented. Particular attention is given regarding the deterministic aspects of the system in a RTOS context. Some aspects of determism might be dealt only theoretically, though. 
+For simplicity the Heap-Memory is used to save data. The structure of a file itself is composed of a linked list.
+A very limited CLI is provided for demonstrating and testing of the filesystem.
+
 
 
 # Offered Functionality/API
-open()
-write()
-read()
-rm()
-create_dir()
-create()
+open(): Returns a task specific handle to the file specified by the path String. The file cannot be deleted while it's open in any task, but i might be read or edited.
+read(): Returns the content of the file specified by a task specific handle. During the read operation the content of the file cannot be changed by any other process, but it might be edited afterwards.
+write(): Changes the content of the file specified by a task specific handle. During the write operation the content of the file cannot be changed or read by any other process, but it might be edited afterwards.
+rm(): Deletes a file or directory specified by a path String. Files cannnot be deleted while they are open in any task. Directorys cannot be deleted if they contain other directories or files.
+create_dir(): Creates a directory specified by a path String. If the path contains directories which don't exist, these directories are also created.
+create(): Creates a file specified by a path String. If the path contains directories which don't exist, these directories are also created.
+
 # Implementation Details
 ## Important Strcuts
 Tables
-# Disclaimer
-Was geht nicht
+
+## Limitations
+- Paths must not be longer than 32 characters
+- Limited CLI Functionality
+- Not all edge cases might be covered
 
 ## Building
 
