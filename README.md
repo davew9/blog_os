@@ -10,22 +10,42 @@ For simplicity the Heap-Memory is used to save data. The structure of a file its
 A very limited CLI is provided for demonstrating and testing of the filesystem.
 
 
+# Functionality
+### Offered Methods
+**open():** Returns a task specific handle to the file specified by the path String. The file cannot be deleted while it's open in any task, but i might be read or edited.    
+**close():** Closes the file specified by a task specific handle. Therefore the handle becomes invalid.     
+**read()**: Returns the content of the file specified by a task specific handle. During the read operation the content of the file cannot be changed by any other process, but it might be edited afterwards.    
+**write()**: Changes the content of the file specified by a task specific handle. During the write operation the content of the file cannot be changed or read by any other process, but it might be edited afterwards.    
+**rm()**: Deletes a file or directory specified by a path String. Files cannnot be deleted while they are open in any task. Directories cannot be deleted if they contain other directories or files.    
+**create_dir()**: Creates a directory specified by a path String. If the path contains directories which don't exist, these directories are also created.    
+**create()**: Creates a file specified by a path String. If the path contains directories which don't exist, these directories are also created.    
 
-# Offered Functionality/API
-open(): Returns a task specific handle to the file specified by the path String. The file cannot be deleted while it's open in any task, but i might be read or edited.
-read(): Returns the content of the file specified by a task specific handle. During the read operation the content of the file cannot be changed by any other process, but it might be edited afterwards.
-write(): Changes the content of the file specified by a task specific handle. During the write operation the content of the file cannot be changed or read by any other process, but it might be edited afterwards.
-rm(): Deletes a file or directory specified by a path String. Files cannnot be deleted while they are open in any task. Directorys cannot be deleted if they contain other directories or files.
-create_dir(): Creates a directory specified by a path String. If the path contains directories which don't exist, these directories are also created.
-create(): Creates a file specified by a path String. If the path contains directories which don't exist, these directories are also created.
+
+### Command Line Interface
+- "/" might be bound to the # key
+- there is no possibility to delete an input
+#### Commands
+**mkdir \<path\>**: Creates directory specified by path and all not existing parent directories    
+**mkfile \<path\>**: Creates file specified by path and all not existing parent directories     
+**rm \<path\>**: Deletes file or directorie specified by path    
+**show \<path\>**: Shows content of file specified by path    
+**edit \<path\> \<txt\>**: Replaces content of file specified by path with txt    
+**cd \<path\>**: Changes working directory according to path    
 
 # Implementation Details
-## Important Strcuts
-Tables
+## Concurrent Access
+All system tables which might be concurrently accessed are guarded by a semaphore based Read-Write-Lock. The Read-Lock still allows for atomic operations. Therefore the read() and write() operations can be executed fully concurrently if they don't concern the same file. The open(), close(), rm(), and create() operations need an exclusive lock for certain structures and are also generally more time consuming. In a RTOS context its recommended to execute those operations as rarely as possible. For example only at the start and at the shutdown of a system.
+
+The files themselves are also protected by a Read-Write-Lock Mechanism. A lock will only be held as long as the file is actively accessed. Therefore the possibility to come upon a locked file is drastically reduced. On the other hand, a task has no chance to prevent or detect a change in data.
+
+
+# File Structure
+TODO: Linked List beschreiben
 
 ## Limitations
 - Paths must not be longer than 32 characters
 - Limited CLI Functionality
+- The filesystem doesn't check for duplicate names
 - Not all edge cases might be covered
 
 ## Building
