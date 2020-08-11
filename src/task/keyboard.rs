@@ -9,8 +9,9 @@ use futures_util::{
     stream::{Stream, StreamExt},
     task::AtomicWaker,
 };
-use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
+use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1, KeyCode};
 use alloc::string::ToString;
+use pc_keyboard::KeyCode::{ArrowDown, Escape};
 
 static SCANCODE_QUEUE: OnceCell<ArrayQueue<u8>> = OnceCell::uninit();
 static WAKER: AtomicWaker = AtomicWaker::new();
@@ -77,13 +78,20 @@ pub async fn print_keypresses() {
             if let Some(key) = keyboard.process_keyevent(key_event) {
                 match key {
                     DecodedKey::Unicode(character) => {
-                        print!("{}", character);
+                        if character != "\x08".parse().unwrap() {
+                            print!("{}", character);
+                        }
                         cli::add_char(&character.to_string());
                     },
 
                     DecodedKey::RawKey(key) => {
-                        print!("{:?}", key);
-                        cli::add_char(&' '.to_string())
+                        //print!("{:?}", key);
+                        if key == Escape {
+                            cli::add_char("ESC");
+                        }
+                        else {
+                        cli::add_char(&' '.to_string());
+                        }
                     }
                 }
             }

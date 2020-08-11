@@ -68,7 +68,7 @@ async fn example_task() {
     let file1 = filesystem::open("test1").unwrap();
     //let file2 = filesystem::open("test2");
     println!("writing content in test1 and test2");
-    filesystem::write(file1, 0, "Content of File 1: Should be also visible in task2");
+    filesystem::write(file1, "Content of File 1: Should be also visible in task2", false);
     //filesystem::write(file2, 0, "Content of File 2: Should be also visible in task2");
     let content1 = filesystem::read(file1,0);
     //let content2 = filesystem::read(file4,0);
@@ -91,7 +91,7 @@ async fn example_task2() {
     filesystem::create("directory1/directory1/test2");
     filesystem::create("directory1/directory2/test2");
     let file5 = filesystem::open("directory1/directory2/test2").unwrap();
-    filesystem::write(file5, 0, "this is pretty nested");
+    filesystem::write(file5, "this is pretty nested", false);
     filesystem::close(file5);
     let file6 = filesystem::open("directory1/directory2/test2").unwrap();
     let content6 = filesystem::read(file6, 0);
@@ -111,7 +111,7 @@ async fn example_task3() {
     filesystem::open("directory1/directory1/test2");
     filesystem::create("1/2/3/4/5/6/file");
     let file8 = filesystem::open("1/2/3/4/5/6/file").unwrap();
-    filesystem::read(file8,0);
+    filesystem::read(file8,2);
     filesystem::open("1/2/3/4/5/6");
     filesystem::delete("1/2/3/4/5/6/file");
     filesystem::close(file8);
@@ -129,7 +129,7 @@ async fn example_task_file_type() {
     test_file.write("aaaaaaaaaaaaaaaaaaaaa");
     test_file.empty();
 
-    let content = test_file.read(1);
+    let content = test_file.read(0,1);
 
     println!("Content of TEST-FILE:");
     for letter in content {
@@ -139,7 +139,7 @@ async fn example_task_file_type() {
     // INHALT 2 - SCHREIBEN, ANFÜGEN, LESEN
     test_file.write("test");
     test_file.append("abcde");
-    let content = test_file.read(1);
+    let content = test_file.read(0,1);
 
     println!("Content of TEST-FILE:");
     for letter in content {
@@ -148,7 +148,7 @@ async fn example_task_file_type() {
 
     // INHALT 3 - SCHREIBEN ÜBER MEHERERE NODS, LESEN
     test_file.write("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbZZZZbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaabbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbZZZbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbZZZ");
-    let content = test_file.read(3);
+    let content = test_file.read(0,4);
 
     println!("Content of TEST-FILE:");
     for letter in content {

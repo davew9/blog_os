@@ -49,6 +49,7 @@ impl FileListNode {
                     data,
                     next: None,
                 };
+                println!("Node Added");
                 self.next = Some(Box::new(new_node));
             },
             Some(ref mut next_node) => next_node.add_node(data),
@@ -174,26 +175,32 @@ impl File {
         }
     }
 
-    pub fn read(&mut self, length: i64) -> Vec<[u8;BYTE_LENGTH]> { // length = bytes
+    pub fn read(&mut self, range_start: usize, range_end:usize) -> Vec<[u8;BYTE_LENGTH]> { // length = bytes
         let mut content_vec: Vec<[u8;BYTE_LENGTH]> = Vec::new();
-        let node_count = length as usize;
+        //let node_count = length as usize;
         let mut selected_node = &mut self.head;
 
-        for node_counter in 0..node_count {
+        for node_counter in 0..range_end {
+            // Every Node not first or last
             if node_counter > 0 {
                 if selected_node.get_next_node().is_some() {
                     selected_node = selected_node.get_next_node().unwrap();
-                    content_vec.push(selected_node.data)
+                    if (range_start..range_end).contains(&node_counter) {
+                        content_vec.push(selected_node.data);
+                    }
                 }
+                // Last Node
                 else {
                     return content_vec;
                 }
             }
+            // First Node
             else {
-                content_vec.push(selected_node.data)
+                if (range_start..range_end).contains(&node_counter) {
+                    content_vec.push(selected_node.data);
+                }
             }
         }
-
         return content_vec;
     }
 
