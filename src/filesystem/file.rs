@@ -131,8 +131,8 @@ impl File {
         // find the last content
         let mut rest_length = data.len();
         let mut no_empty_space_found = false;
-        let cn_index = 5;// current_node.find_zero_in_data_array();
-        if cn_index > BYTE_LENGTH {
+        let cn_index = current_node.find_zero_in_data_array();
+        if cn_index > BYTE_LENGTH-1 {
             no_empty_space_found = true;
         }
 
@@ -143,10 +143,12 @@ impl File {
             // fill up the last node with data
             let data_part = &data[0..rest_length];
             current_node.append_data(str_to_file(&data_part), cn_index, rest_length);
+
+            rest_length = data.len() - rest_length;
         }
 
         // write rest data to file
-        if rest_length != 0 {
+        if rest_length > 0 {
             let new_start_index = data.len() - rest_length;
             rest_length = data.len() - new_start_index;
             let data_part = &data[new_start_index..rest_length];
