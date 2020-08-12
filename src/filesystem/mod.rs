@@ -47,7 +47,7 @@ fn str_to_u8(s: &str) -> [u8;32]{
         if i<32 {
             match byte {
                 // printable ASCII byte or newline
-                0x20..=0x7e | b'\n' => data[i] = byte,
+                0x20..=0x7e => data[i] = byte,
                 // not part of printable ASCII range
                 _ =>data[i] = 0xfe,
             }
@@ -73,6 +73,10 @@ fn str_to_file(s: &str) -> [u8;1024]{
 
 // Creates new file and all non existing directories in path
 pub fn create(path: &str) {
+    if path.len() > 32 {
+        println!("Path is too long");
+        return
+    }
     let mut node;
     let mut root = true;
     // DirectoryTable of current directory
@@ -131,11 +135,19 @@ pub fn create(path: &str) {
                 //CASE: The file is located at first level
                 //Create the file and store the pointer in the Root FileDirectoryTable
                 if root {
+                    if fn_table.exists(&chunk_u8) {
+                        println!("'{}' already exists at this place", chunk);
+                        return
+                    }
                     fn_table.insert(chunk_u8, node);
                 }
                 //CASE: The file is not located at firs level
                 //Create the file and store the pointer in the FileTable of the previous directory
                 else {
+                    if dir_table.exists(&chunk_u8) {
+                        println!("'{}' already exists at this place", chunk);
+                        return
+                    }
                     dir_table.insert(chunk_u8, node);
                 }
                 println!("File '{}' was created", chunk)
@@ -147,6 +159,10 @@ pub fn create(path: &str) {
 // Creates new directory and all non existing directorys in path
 // TODO Viel Code identisch zu create, kann man vielleicht in funktion kapseln
 pub fn create_dir(path: &str) {
+    if path.len() > 32 {
+        println!("Path is too long");
+        return
+    }
     let mut node;
     let mut root = true;
     // FileDirectoryTable of current directory
@@ -204,11 +220,19 @@ pub fn create_dir(path: &str) {
                 //CASE: The directory is located at first level
                 //Create the directory and store the pointer in the Root FileDirectoryTable
                 if root {
+                    if fn_table.exists(&chunk_u8) {
+                        println!("'{}' already exists at this place", chunk);
+                        return
+                    }
                     fn_table.insert(chunk_u8, node);
                 }
                 //CASE: The directory is not located at firs level
                 //Create the directory and store the pointer in the FileTable of the previous directory
                 else {
+                    if dir_table.exists(&chunk_u8) {
+                        println!("'{}' already exists at this place", chunk);
+                        return
+                    }
                     dir_table.insert(chunk_u8, node);
                 }
                 println!("Directory '{}' was created", chunk)
@@ -636,16 +660,16 @@ impl DirectoryTable{
         DirectoryTable([DirectoryEntry{node: null_mut(), name:[0;32] }; DIRECTORY_NR])
     }
 
-    fn insert(&mut self, path: [u8;32], node: *mut Node) {
+    fn insert(&mut self, name: [u8;32], node: *mut Node) {
         //search for empty entry
         let index = self.0.iter().position(|r| r.name ==[0;32]).unwrap();
         // Replace empty entry with new entry
-        self.0[index] = DirectoryEntry{node: node, name: path}
+        self.0[index] = DirectoryEntry{node: node, name: name}
     }
 
-    fn get_mut(&self, path: &[u8;32]) -> Option<*mut Node>{
+    fn get_mut(&self, name: &[u8;32]) -> Option<*mut Node>{
         // search for path
-        let index = self.0.iter().position(|r| r.name == *path);
+        let index = self.0.iter().position(|r| r.name == *name);
         // return pointer to node
         return match index {
             Some(x) => Some(self.0[x].node),
@@ -653,9 +677,17 @@ impl DirectoryTable{
         }
     }
 
-    fn delete(&mut self, path: &[u8;32]) {
-        let index = self.0.iter().position(|r| r.name == *path).unwrap();
+    fn delete(&mut self, name: &[u8;32]) {
+        let index = self.0.iter().position(|r| r.name == *name).unwrap();
         self.0[index] = DirectoryEntry{node: null_mut(), name: [0;32]}
+    }
+
+    fn exists(&mut self, name: &[u8;32] ) -> bool {
+        let index = self.0.iter().position(|r| r.name == *name);
+        match index {
+            Some(i) => return true,
+            _ => false
+        }
     }
 }
 

@@ -211,6 +211,6 @@ pub fn init() {
     CLI.lock().working_dir = String::from("/");
     println!("CLI: use cd <path>, mkdir <path>, mkfile <path>, edit <path> <content>,");
     println!("rm <path>, show <path> <page>, apd <path> <content>");
-    println!("Backspace to abort ,'/' might be bound to the '#' Key");
+    println!("Backspace to abort.'/' might be bound to the '#' Key");
     print!("/>");
 }
