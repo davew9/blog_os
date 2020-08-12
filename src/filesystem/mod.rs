@@ -500,6 +500,7 @@ pub fn close(fd_loc: usize) {
 
 // Writes to an file
 //TODO Offset implementieren
+//TODO HIER MERGEN !!!!!
 pub fn write(fd: usize, _offset: usize, data: &str ) {
     // search file in GLOBALFILETABLE
     let data_u8 = str_to_file(data);
@@ -524,6 +525,7 @@ pub fn write(fd: usize, _offset: usize, data: &str ) {
 
 // reads from file
 //TODO Offset implementieren
+//TODO HIER MERGEN !!!!!
 pub fn read(fd: usize, _offset: usize) -> Option<[u8;1024]>{
     // get pointer to Node from GLOBALFILETABLE
     // Lock the corresponding Entry as READ
@@ -738,6 +740,7 @@ pub struct FileNode([u8;1024]);
 pub struct DirectoryNode(NameTable);
 
 pub enum Node{
+    // ToDo File statt Array File Typ
     File(FileNode),
     Directory(DirectoryNode),
 }
