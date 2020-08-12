@@ -40,7 +40,7 @@ All system tables which might be concurrently accessed are guarded by a semaphor
 The files themselves are also protected by a Read-Write-Lock Mechanism. A lock will only be held as long as the file is actively accessed. Therefore the possibility to come upon a locked file is drastically reduced. On the other hand, a task has no chance to prevent or detect a change in data between two file system calls.
 
 
-# File Structure
+## File Structure
 TODO: Linked List beschreiben
 
 ## Limitations
