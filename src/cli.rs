@@ -4,19 +4,17 @@ use alloc::prelude::v1::{String, ToOwned};
 use crate::vga_buffer::print_bytes;
 use crate::filesystem;
 
-const BUFFER_SIZE:usize = 800;
+const BUFFER_SIZE:usize = 1000;
 
 
 lazy_static! {
     static ref CLI: Mutex<Cli> = Mutex::new(Cli::new());
 }
 
-
 struct Cli {
     working_dir: String,
     command: [u8;BUFFER_SIZE],
     cursor_pos: usize,
-
 }
 
 impl Cli {
@@ -35,12 +33,15 @@ impl Cli {
     }
 }
 
+// Function is called by keyboard.rs if keystroke occured
+// Adds key to buffer
 pub fn add_char(char: &str) {
     let mut cli;
     if char == "\n" {
         parse_command();
         return
     }
+    // CASE: Backspace Key
     else if char == "\x08" {
         cli = CLI.lock();
         print!("\n");
@@ -60,12 +61,13 @@ pub fn add_char(char: &str) {
     }
 }
 
+// Is called when an ENTER keystroke is registered
+// Parses Buffer input and calls the matching function with the given arguments
 pub fn parse_command() {
     let mut cli = CLI.lock();
     let wd = cli.working_dir.clone();
     let cursor = cli.cursor_pos;
     let command = String::from_utf8_lossy(&cli.command[0..cursor]);
-
     let mut chunks = command.split(" ");
     let mut operation ="";
     let mut argument = "";
@@ -80,13 +82,11 @@ pub fn parse_command() {
         else if pos == 1 {
             argument = chunk;
         }
-
         else  {
             argument2 = argument2.to_owned() + " " + chunk;
         }
         pos +=1;
     }
-
 
     if argument.starts_with("/") {
         path = argument.to_owned();
@@ -111,10 +111,9 @@ pub fn parse_command() {
     else if operation == "rlock" {rlock(&path, &argument2)}
     else {println!("Unknown command")}
     cli.reset();
-
 }
 
-
+// Opens files and reads content of the kB defined by page
 fn show(path: &str, page: &str ) {
     let page = page.trim().parse::<usize>();
     let mut offset = 0;
@@ -147,6 +146,7 @@ fn mkfile(path: &str) {
     filesystem::create(path);
 }
 
+// Appends to the content of a file
 fn append(path: &str, content: &str ) {
     let fd = filesystem::open(path);
     match fd {
@@ -158,6 +158,7 @@ fn append(path: &str, content: &str ) {
     }
 }
 
+// Changes the content of a file
 fn edit(path: &str, content: &str ) {
     let fd = filesystem::open(path);
     match fd {
@@ -167,6 +168,14 @@ fn edit(path: &str, content: &str ) {
             filesystem::close(fd);
         }
     }
+}
+
+pub fn init() {
+    CLI.lock().working_dir = String::from("/");
+    println!("CLI: use cd <path>, mkdir <path>, mkfile <path>, edit <path> <content>,");
+    println!("rm <path>, show <path> <page>, apd <path> <content>");
+    println!("Backspace to abort.'/' might be bound to the '#' Key");
+    print!("/>");
 }
 
 // Only for testing
@@ -205,12 +214,3 @@ fn rlock(path: &str, arg: &str){
     }
 }
 
-
-
-pub fn init() {
-    CLI.lock().working_dir = String::from("/");
-    println!("CLI: use cd <path>, mkdir <path>, mkfile <path>, edit <path> <content>,");
-    println!("rm <path>, show <path> <page>, apd <path> <content>");
-    println!("Backspace to abort.'/' might be bound to the '#' Key");
-    print!("/>");
-}

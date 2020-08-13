@@ -49,7 +49,6 @@ impl FileListNode {
                     data,
                     next: None,
                 };
-                println!("Node Added");
                 self.next = Some(Box::new(new_node));
             },
             Some(ref mut next_node) => next_node.add_node(data),
