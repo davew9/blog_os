@@ -41,7 +41,11 @@ The files themselves are also protected by a Read-Write-Lock Mechanism. A lock w
 
 
 ## File Structure
-TODO: Linked List beschreiben
+Files are saved as a Linked List. This structure gives us the advantage, that you can store the file on distributed memory parts. You are not dependent on having coherent blocks in the memory. Files can grow and shrink easily. In this prototype one node of the linked list consists a 1 kb data storage as an array of u8 and a pointer to the next node. If you write information to a file the file type divides the data into multiple parts and creates the required amount of nodes. Another possibility is appending information to an existing file. The append function jumps to the last existing node and checks if there is free space. The free space will be filled up with your data. Otherwise more nodes will be created. 
+
+To read from a file you can use the read function. It collects the wanted data by iterating over the nodes and returns the data parts e.g. as a string.  If you want to delete the stored information the nodes get deleted. 
+
+Currently the used memory is placed in the heap. Because of the file concept you can easily move the file type to another storage unit.  
 
 ## Limitations
 - Paths must not be longer than 32 characters
