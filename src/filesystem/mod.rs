@@ -94,10 +94,6 @@ pub fn create(path: &str) {
 
                 //CASE: There is no following Directory/File: Current chunk represents the file to be created
             } else {
-                // Create an Empty File
-                //TODO?
-                let node: Box<Node> = Box::new(Node::FileNode(File::new()));
-                let node: *mut Node = Box::into_raw(node);
                 //CASE: The file is located at first level
                 //Create the file and store the pointer in the Root FileDirectoryTable
                 if root {
@@ -105,15 +101,20 @@ pub fn create(path: &str) {
                         println!("'{}' already exists at this place", chunk);
                         return
                     }
+                    // Create an Empty File
+                    let node: Box<Node> = Box::new(Node::FileNode(File::new()));
+                    let node: *mut Node = Box::into_raw(node);
                     fn_table.insert(chunk_u8, node);
                 }
-                //CASE: The file is not located at firs level
+                //CASE: The file is not located at first level
                 //Create the file and store the pointer in the FileTable of the previous directory
                 else {
                     if dir_table.exists(&chunk_u8) {
                         println!("'{}' already exists at this place", chunk);
                         return
                     }
+                    let node: Box<Node> = Box::new(Node::FileNode(File::new()));
+                    let node: *mut Node = Box::into_raw(node);
                     dir_table.insert(chunk_u8, node);
                 }
                 println!("File '{}' was created", chunk)
@@ -179,9 +180,6 @@ pub fn create_dir(path: &str) {
 
                 //CASE: There is no following Directory/File: Current chunk represents the file to be created
             } else {
-                // Create an Empty Directory
-                let node: Box<Node> = Box::new(Node::DirectoryNode(Directory(DirectoryTable::new())));
-                let node: *mut Node = Box::into_raw(node);
                 //CASE: The directory is located at first level
                 //Create the directory and store the pointer in the Root FileDirectoryTable
                 if root {
@@ -189,6 +187,9 @@ pub fn create_dir(path: &str) {
                         println!("'{}' already exists at this place", chunk);
                         return
                     }
+                    // Create an Empty Directory
+                    let node: Box<Node> = Box::new(Node::DirectoryNode(Directory(DirectoryTable::new())));
+                    let node: *mut Node = Box::into_raw(node);
                     fn_table.insert(chunk_u8, node);
                 }
                 //CASE: The directory is not located at firs level
@@ -198,6 +199,9 @@ pub fn create_dir(path: &str) {
                         println!("'{}' already exists at this place", chunk);
                         return
                     }
+                    // Create an Empty Directory
+                    let node: Box<Node> = Box::new(Node::DirectoryNode(Directory(DirectoryTable::new())));
+                    let node: *mut Node = Box::into_raw(node);
                     dir_table.insert(chunk_u8, node);
                 }
                 println!("Directory '{}' was created", chunk)
@@ -421,7 +425,7 @@ pub fn open(path: &str) -> Option<usize> {
                     root = false;
                     node = fn_table.get_mut(&chunk_u8);
                 }
-                // CASE: Current directory is not a firs level directory
+                // CASE: Current directory is not a first level directory
                 // -> Lookup in DirectoryTable of the previous directory
                 else {
                     node = dir_table.get_mut(&chunk_u8);
@@ -452,6 +456,8 @@ pub fn open(path: &str) -> Option<usize> {
                 } else {
                     node = dir_table.get_mut(&chunk_u8);
                 }
+                // Release Lock on Directory Table
+                drop(fn_table);
                 if !node.is_some() {
                     println!("'{}' doesn't exist", chunk);
                     return None
@@ -481,6 +487,7 @@ pub fn open(path: &str) -> Option<usize> {
 // Removes the FD from the GLOBALFILETABLE if the file isn't open somewhere else
 pub fn close(fd_loc: usize) {
     let fd_glob;
+    // Find FileDescription corresponding to the local FD
     unsafe {fd_glob = LOCALFILETABLE.get_global_fd(fd_loc)};
     unsafe {LOCALFILETABLE.delete_entry(fd_loc)};
     let mut f_table= GLOBALFILETABLE.wlock();

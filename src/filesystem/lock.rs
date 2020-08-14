@@ -114,7 +114,6 @@ impl<T: ?Sized> RWLock<T>
                 spin_loop()
             }
         }
-
     }
 
     // Internal function to obtain read lock
