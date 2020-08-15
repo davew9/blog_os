@@ -2,7 +2,7 @@
 
 This repository contains the source code for a Filesystem Extension for the Rust OS written by Philipp Oppermann.
 
-**Check out the [master branch](https://github.com/phil-opp/blog_os) or the associated [blog](https://os.phil-opp.com) for more  information about the project by Phillip Oppermann.**
+**Check out the [master branch](https://github.com/phil-opp/blog_os) or the associated [blog](https://os.phil-opp.com) for more  information about the project by Philipp Oppermann.**
 
 # Summary
 This extension contains a simple in-memory filesystem, which offers methods to create, edit and delete files. Furthermore a directory system is implemented. Particular attention is given regarding the deterministic aspects of the system in a RTOS context. Some aspects of determism might be dealt only theoretically, though. 
@@ -50,6 +50,7 @@ Currently the used memory is placed in the heap. Because of the file concept you
 ## Limitations
 - Paths must not be longer than 32 characters
 - Not all edge cases might be covered
+- No User Management
 
 ## Building
 
