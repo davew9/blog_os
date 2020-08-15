@@ -1,6 +1,6 @@
 # Blog OS Filesystem Extension
 
-This repository contains the source code for a Filesystem Extension for the Rust OS written by Phillip Oppermann.
+This repository contains the source code for a Filesystem Extension for the Rust OS written by Philipp Oppermann.
 
 **Check out the [master branch](https://github.com/phil-opp/blog_os) or the associated [blog](https://os.phil-opp.com) for more  information about the project by Phillip Oppermann.**
 
