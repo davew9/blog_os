@@ -32,8 +32,6 @@ lazy_static! {
 // Global File Descriptor is the Content, Local File Descriptor the Position of the Array Field
 static mut LOCALFILETABLE: LocalFileTable = LocalFileTable{active_task:0, table: [[255;20];LOCALFILETABLE_SIZE]};
 
-// bisher nur zu testzwecken, wird mit blog_os::init aufgerufen.
-
 
 //__________________________FILESYSTEM API________________________________________________________//
 
@@ -84,7 +82,8 @@ pub fn create(path: &str) {
                 }
                 root = false;
 
-                // CASE: There was a node with this file, but its not a directory node
+                // CASE: There was a node with this name. If its an directory, set this directory
+                // as current Directory
                 unsafe {
                     match *(node.unwrap()) {
                         Node::DirectoryNode(ref mut d) => { dir_table = &mut d.0 },
@@ -123,7 +122,7 @@ pub fn create(path: &str) {
     }
 }
 
-// Creates new directory and all non existing directorys in path
+// Creates new directory and all non existing directories in path
 pub fn create_dir(path: &str) {
     if path.len() > 32 {
         println!("Path is too long");
@@ -210,7 +209,7 @@ pub fn create_dir(path: &str) {
     }
 }
 
-// Validates the path to a directory (Used by CLI)
+// Validates the path to a directory (Used by CLI only)
 pub fn validate_path(path: &str) -> bool {
     let mut node;
     let mut root = true;
@@ -483,12 +482,12 @@ pub fn open(path: &str) -> Option<usize> {
 }
 
 
-// Removes the FD from the LOCALFILETABLE
-// Removes the FD from the GLOBALFILETABLE if the file isn't open somewhere else
+// Closes file
 pub fn close(fd_loc: usize) {
     let fd_glob;
-    // Find FileDescription corresponding to the local FD
+    // Get FileDescription corresponding to the local FD
     unsafe {fd_glob = LOCALFILETABLE.get_global_fd(fd_loc)};
+    // Delete the entry in the Local File Table
     unsafe {LOCALFILETABLE.delete_entry(fd_loc)};
     let mut f_table= GLOBALFILETABLE.wlock();
     f_table.table[fd_glob].open.fetch_sub(1, Ordering::SeqCst);
@@ -501,7 +500,7 @@ pub fn close(fd_loc: usize) {
 
 // Writes to an file
 pub fn write(fd: usize, data: &str, append: bool ) {
-    // search file in GLOBALFILETABLE
+    // get FileDescription corresponding to the local FD
     let fd_glob;
     unsafe {fd_glob = LOCALFILETABLE.get_global_fd(fd)}
     let mut guard = GLOBALFILETABLE.wlock();
@@ -526,7 +525,7 @@ pub fn write(fd: usize, data: &str, append: bool ) {
 
 // reads from file
 pub fn read(fd: usize, offset: usize) -> Option<[u8;1024]>{
-    // get pointer to Node from GLOBALFILETABLE
+    // get FileDescription corresponding to the local FD
     // Lock the corresponding Entry as READ
     let fd_glob;
     unsafe {fd_glob = LOCALFILETABLE.table[LOCALFILETABLE.active_task as usize][fd];}
@@ -534,7 +533,7 @@ pub fn read(fd: usize, offset: usize) -> Option<[u8;1024]>{
     let node = guard.get_r_access(fd_glob);
 
     if !node.is_some() {
-        println!("No read possible File is locked");
+        println!("No read possible. File is locked");
         return None;
     }
 
@@ -548,11 +547,15 @@ pub fn read(fd: usize, offset: usize) -> Option<[u8;1024]>{
                     data = data_vector[0];
                 }
                 else {
+                    // Release Lock of the file
+                    guard.return_r_access(fd_glob);
                     return None;
                 }
             },
             _ => panic!("UNEXPECTED DIRECTORY")
-        } }
+        }
+    }
+    // Release Lock of the file
     guard.return_r_access(fd_glob);
     Some(data) }
 
@@ -590,7 +593,6 @@ impl FileDescription {
 
 unsafe impl Send for FileDescription{}
 
-
 struct DirectoryTable([DirectoryEntry;DIRECTORY_NR]);
 
 impl DirectoryTable{
@@ -616,6 +618,7 @@ impl DirectoryTable{
     }
 
     fn delete(&mut self, name: &[u8;32]) {
+        // Replaces entry with an blank entry
         let index = self.0.iter().position(|r| r.name == *name).unwrap();
         self.0[index] = DirectoryEntry{node: null_mut(), name: [0;32]}
     }
@@ -791,7 +794,7 @@ fn str_to_file(s: &str) -> [u8;1024]{
     data
 }
 
-// Only for testing
+// Only for testing of the lock function
 pub fn w_lock(fd: usize, lock: bool) {
     let fd_glob;
     unsafe {fd_glob = LOCALFILETABLE.table[LOCALFILETABLE.active_task as usize][fd];}
@@ -804,7 +807,7 @@ pub fn w_lock(fd: usize, lock: bool) {
     }
 }
 
-// Only for testing
+// Only for testing of the lock function
 pub fn r_lock(fd: usize, lock: bool) {
     let fd_glob;
     unsafe {fd_glob = LOCALFILETABLE.table[LOCALFILETABLE.active_task as usize][fd];}
