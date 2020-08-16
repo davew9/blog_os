@@ -711,7 +711,7 @@ impl FileTable {
 }
 
 struct LocalFileTable{
-    table: [[usize;20];20],
+    table: [[usize;20];LOCALFILETABLE_SIZE],
     active_task: u64
 }
 
