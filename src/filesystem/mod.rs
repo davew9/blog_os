@@ -11,7 +11,7 @@ pub mod lock;
 pub mod file;
 
 // Maximum number of entries in LOCALFILETABLE for each task
-const LOCALFILETABLE_SIZE:usize =20;
+const LOCALFILETABLE_SIZE:usize = 50;
 // Maximum number of Filedescriptions in GLOBALFILETABLE
 const GLOBALFILETABLE_SIZE: usize = 100;
 // Maximum number of Directories in a Directory
@@ -719,6 +719,7 @@ impl LocalFileTable {
     fn add_entry(&mut self, global_file_desc: usize) -> usize
     {
         //search for empty file descriptor position
+        //255 represents blank entry
         let index = self.table[self.active_task as usize].iter().position(|r| *r == 255);
         //set local entry and return index
         match index {
@@ -738,7 +739,7 @@ impl LocalFileTable {
 
     // Removes Entry from local FileTable
     fn delete_entry(&mut self, local_file_desc: usize) {
-        self.table[self.active_task as usize][local_file_desc] = 0;
+        self.table[self.active_task as usize][local_file_desc] = 255;
     }
 
 }
