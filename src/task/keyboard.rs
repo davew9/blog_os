@@ -77,14 +77,13 @@ pub async fn print_keypresses() {
             if let Some(key) = keyboard.process_keyevent(key_event) {
                 match key {
                     DecodedKey::Unicode(character) => {
-                        print!("{}", character);
+                        if character != "\x08".parse().unwrap() {
+                            print!("{}", character);
+                        }
                         cli::add_char(&character.to_string());
                     },
 
-                    DecodedKey::RawKey(key) => {
-                        print!("{:?}", key);
-                        cli::add_char(&' '.to_string())
-                    }
+                    DecodedKey::RawKey(_key) => ()
                 }
             }
         }

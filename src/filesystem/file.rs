@@ -132,8 +132,8 @@ impl File {
         // find the last content
         let mut rest_length = data.len();
         let mut no_empty_space_found = false;
-        let cn_index = 5;// current_node.find_zero_in_data_array();
-        if cn_index > BYTE_LENGTH {
+        let cn_index = current_node.find_zero_in_data_array();
+        if cn_index > BYTE_LENGTH-1 {
             no_empty_space_found = true;
         }
 
@@ -149,7 +149,7 @@ impl File {
         }
 
         // write rest data to file
-        if rest_length != 0 {
+        if rest_length > 0 {
             let new_start_index = data.len() - rest_length;
             rest_length = data.len() - new_start_index;
             let data_part = &data[new_start_index..rest_length];
@@ -178,26 +178,32 @@ impl File {
         }
     }
 
-    pub fn read(&mut self, length: i64) -> Vec<[u8;BYTE_LENGTH]> { // length = bytes
+    pub fn read(&mut self, range_start: usize, range_end:usize) -> Vec<[u8;BYTE_LENGTH]> { // length = bytes
         let mut content_vec: Vec<[u8;BYTE_LENGTH]> = Vec::new();
-        let node_count = length as usize;
+        //let node_count = length as usize;
         let mut selected_node = &mut self.head;
 
-        for node_counter in 0..node_count {
+        for node_counter in 0..range_end {
+            // Every Node not first or last
             if node_counter > 0 {
                 if selected_node.get_next_node().is_some() {
                     selected_node = selected_node.get_next_node().unwrap();
-                    content_vec.push(selected_node.data)
+                    if (range_start..range_end).contains(&node_counter) {
+                        content_vec.push(selected_node.data);
+                    }
                 }
+                // Last Node
                 else {
                     return content_vec;
                 }
             }
+            // First Node
             else {
-                content_vec.push(selected_node.data)
+                if (range_start..range_end).contains(&node_counter) {
+                    content_vec.push(selected_node.data);
+                }
             }
         }
-
         return content_vec;
     }
 
