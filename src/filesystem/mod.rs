@@ -319,13 +319,16 @@ pub fn delete(path: &str) {
                     node = dir_table.get_mut(&chunk_u8);
                 }
                 if !node.is_some() {
-                    println!("Directory: '{}' doesn't exist", chunk)
+                    println!("Directory: '{}' doesn't exist", chunk);
+                    return
                 }
 
                 unsafe {
                     match *(node.unwrap()) {
                         Node::DirectoryNode(ref mut d) => { dir_table = &mut d.0 },
-                        _ => println!("'{}' is no directory", chunk)
+                        _ => {  println!("'{}' is no directory", chunk);
+                        return
+                        }
                     }
                 }
                 root = false;
