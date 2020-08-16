@@ -3,6 +3,7 @@ use crate::filesystem::{str_to_file};
 
 const BYTE_LENGTH:usize = 1024;
 
+// Linked List Node contains part of the file data
 #[allow(dead_code)]
 pub struct FileListNode {
     //TODO nicht den Heap als Speicher verwenden, sondern eigenen Bereich
@@ -11,6 +12,7 @@ pub struct FileListNode {
     next: Option<Box<FileListNode>>,
 }
 
+// Start node of the file
 pub struct File{
     head: FileListNode,
 }
